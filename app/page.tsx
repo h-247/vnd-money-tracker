@@ -80,6 +80,13 @@ export default function Home() {
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [authStatus, setAuthStatus] = useState<
+    'checking' | 'authenticated' | 'unauthenticated' | 'error'
+  >('checking');
+  const [signInReturnTo, setSignInReturnTo] = useState('/');
+  const [sharedAccountError, setSharedAccountError] = useState<string | null>(
+    null,
+  );
 
   // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -137,6 +144,7 @@ export default function Home() {
       const data = (await res.json()) as ApiResponse<SummaryData>;
       if (data.success && data.data) {
         setSummary(data.data);
+        setSharedAccountError(null);
         if (data.user) {
           setUser(data.user);
         }
@@ -151,7 +159,9 @@ export default function Home() {
           transactionCount: 0,
         });
         setTransactions([]);
-        setActiveSharedAccount(null);
+        setSharedAccountError(
+          'This invitation is unavailable for the signed-in email. Sign in with the invited ChatGPT account or ask the owner to resend the invitation.',
+        );
       }
     } finally {
       setIsLoadingSummary(false);
@@ -162,6 +172,10 @@ export default function Home() {
     setIsLoadingShares(true);
     try {
       const res = await fetch('/api/shares', { cache: 'no-store' });
+      if (res.status === 401) {
+        setAuthStatus('unauthenticated');
+        return null;
+      }
       const payload = (await res.json()) as {
         success?: boolean;
         data?: {
@@ -174,10 +188,12 @@ export default function Home() {
       }
       setOutgoingShares(payload.data.outgoing);
       setIncomingShares(payload.data.incoming);
+      setAuthStatus('authenticated');
       return payload.data.incoming;
     } catch (error) {
       console.error('fetchShares error:', error);
-      return [];
+      setAuthStatus('error');
+      return null;
     } finally {
       setIsLoadingShares(false);
     }
@@ -259,19 +275,26 @@ export default function Home() {
     const initializeShares = async () => {
       const incoming = await fetchShares();
       if (!isCurrent) return;
+      if (!incoming) {
+        setInitialLoadComplete(true);
+        return;
+      }
 
       const requestedShareId = new URLSearchParams(window.location.search).get(
         'shareId',
       );
       const selectedShare = requestedShareId
-        ? (incoming.find((share) => share.id === requestedShareId) ?? null)
+        ? (incoming.find((share) => share.id === requestedShareId) ?? {
+            id: requestedShareId,
+            createdAt: new Date(),
+          })
         : incoming.length === 1
           ? incoming[0]
           : null;
 
       if (selectedShare) {
         setActiveSharedAccount(selectedShare);
-        if (requestedShareId === selectedShare.id) {
+        if (requestedShareId) {
           const url = new URL(window.location.href);
           url.searchParams.delete('shareId');
           window.history.replaceState({}, '', url);
@@ -287,16 +310,18 @@ export default function Home() {
   }, [fetchShares]);
 
   useEffect(() => {
-    void fetchTags();
-  }, [fetchTags]);
+    if (authStatus === 'authenticated') void fetchTags();
+  }, [authStatus, fetchTags]);
 
   useEffect(() => {
-    if (initialLoadComplete) void fetchSummary();
-  }, [fetchSummary, initialLoadComplete]);
+    if (initialLoadComplete && authStatus === 'authenticated') {
+      void fetchSummary();
+    }
+  }, [authStatus, fetchSummary, initialLoadComplete]);
 
   // Load transactions when filters change
   useEffect(() => {
-    if (!initialLoadComplete) return;
+    if (!initialLoadComplete || authStatus !== 'authenticated') return;
     void fetchTransactions(1);
   }, [
     search,
@@ -305,6 +330,7 @@ export default function Home() {
     startDate,
     endDate,
     fetchTransactions,
+    authStatus,
     initialLoadComplete,
   ]);
 
@@ -367,6 +393,7 @@ export default function Home() {
     setDeletingTx(null);
     setIsManageTagsOpen(false);
     setIsShareModalOpen(false);
+    setSharedAccountError(null);
     setSearch('');
     setTypeFilter('ALL');
     setTagFilter('ALL');
@@ -377,6 +404,7 @@ export default function Home() {
   };
 
   const showMyAccount = () => {
+    setSharedAccountError(null);
     setSearch('');
     setTypeFilter('ALL');
     setTagFilter('ALL');
@@ -610,6 +638,62 @@ export default function Home() {
     )
     .map((t) => t.name);
 
+  useEffect(() => {
+    setSignInReturnTo(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`,
+    );
+  }, []);
+
+  if (authStatus === 'unauthenticated') {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#212121] px-4 text-[#ECECEC]">
+        <section className="w-full max-w-md rounded-2xl border border-[#3A3A3A] bg-[#222222] p-6 text-center shadow-xl">
+          <h1 className="text-xl font-bold">Sign in to view this account</h1>
+          <p className="mt-3 text-sm leading-6 text-[#A3A3A3]">
+            Open this invitation in ChatGPT and sign in with the email address
+            the owner invited. Your account and transactions stay private.
+          </p>
+          <a
+            href={`/signin-with-chatgpt?return_to=${encodeURIComponent(signInReturnTo)}`}
+            target="_top"
+            className="mt-6 inline-flex rounded-xl bg-white px-5 py-3 text-sm font-bold text-[#171717] hover:bg-zinc-200"
+          >
+            Sign in with ChatGPT
+          </a>
+        </section>
+      </main>
+    );
+  }
+
+  if (authStatus === 'error') {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#212121] px-4 text-[#ECECEC]">
+        <section className="w-full max-w-md rounded-2xl border border-[#3A3A3A] bg-[#222222] p-6 text-center shadow-xl">
+          <h1 className="text-xl font-bold">Could not verify your sign-in</h1>
+          <p className="mt-3 text-sm leading-6 text-[#A3A3A3]">
+            Refresh the page to try again. Financial data stays hidden until
+            your ChatGPT account can be verified.
+          </p>
+          <button
+            type="button"
+            onClick={() => void fetchShares()}
+            className="mt-6 rounded-xl bg-white px-5 py-3 text-sm font-bold text-[#171717] hover:bg-zinc-200"
+          >
+            Try again
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  if (authStatus === 'checking' || !initialLoadComplete) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#212121] text-sm text-[#A3A3A3]">
+        Checking your ChatGPT sign-in…
+      </main>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#212121] text-[#ECECEC] flex flex-col">
       {/* Top Header */}
@@ -638,6 +722,11 @@ export default function Home() {
                 Read-only access. You can view the balance and transaction
                 history.
               </p>
+              {sharedAccountError && (
+                <p role="alert" className="mt-2 text-xs text-red-300">
+                  {sharedAccountError}
+                </p>
+              )}
             </div>
             <button
               type="button"
