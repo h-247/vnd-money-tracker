@@ -1,0 +1,80 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans:
+    var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
+  --color-main-bg: #212121;
+  --color-card-bg: #262626;
+  --color-input-bg: #1a1a1a;
+  --color-primary-text: #ececec;
+  --color-secondary-text: #9ca3af;
+  --color-card-border: #2e2e2e;
+  --color-subtle-border: #333333;
+  --color-positive: #22c55e;
+  --color-negative: #ef4444;
+}
+
+:root {
+  --background: #212121;
+  --foreground: #ececec;
+  --card: #262626;
+  --card-foreground: #ececec;
+  --popover: #262626;
+  --popover-foreground: #ececec;
+  --primary: #ffffff;
+  --primary-foreground: #171717;
+  --secondary: #333333;
+  --secondary-foreground: #ececec;
+  --muted: #2a2a2a;
+  --muted-foreground: #9ca3af;
+  --accent: #333333;
+  --accent-foreground: #ececec;
+  --destructive: #ef4444;
+  --border: #2e2e2e;
+  --input: #1a1a1a;
+  --ring: #a3a3a3;
+  --radius: 0.75rem;
+}
+
+body {
+  background-color: #212121;
+  color: #ececec;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbars for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #212121;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}
+
+/* Remove number input spinners */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}

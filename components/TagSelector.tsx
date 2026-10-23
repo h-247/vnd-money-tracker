@@ -1,0 +1,188 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Tag as TagIcon, Plus, Check, X } from 'lucide-react';
+
+interface TagSelectorProps {
+  selectedTag: string | null;
+  onSelectTag: (tag: string | null) => void;
+  tags?: string[];
+  defaultTags?: string[];
+  customTags?: string[];
+  accentColor?: 'emerald' | 'red' | 'blue';
+  disabled?: boolean;
+  onManageTags?: () => void;
+}
+
+export function TagSelector({
+  selectedTag,
+  onSelectTag,
+  tags = [],
+  defaultTags = [],
+  customTags = [],
+  accentColor = 'emerald',
+  disabled = false,
+  onManageTags,
+}: TagSelectorProps) {
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [newTagInput, setNewTagInput] = useState('');
+
+  // Combine tags without duplicates
+  const allTags = Array.from(
+    new Set([...tags, ...defaultTags, ...customTags.filter(Boolean)]),
+  );
+
+  const handleAddNewTag = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    const trimmed = newTagInput.trim();
+    if (trimmed) {
+      onSelectTag(trimmed);
+      setNewTagInput('');
+      setIsAddingNew(false);
+    }
+  };
+
+  const selectedClasses =
+    accentColor === 'emerald'
+      ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500 shadow-sm'
+      : accentColor === 'red'
+        ? 'bg-red-950/80 text-red-300 border-red-500 shadow-sm'
+        : 'bg-blue-950/80 text-blue-300 border-blue-500 shadow-sm';
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">
+          <TagIcon className="w-3.5 h-3.5" />
+          <span>Category Tag</span>
+          <span className="text-[11px] font-normal text-[#666666] lowercase">
+            (optional)
+          </span>
+        </span>
+        <div className="flex items-center gap-2">
+          {onManageTags && (
+            <button
+              type="button"
+              onClick={onManageTags}
+              disabled={disabled}
+              className="text-[11px] text-[#9CA3AF] hover:text-[#ECECEC] transition-colors underline focus:outline-none"
+            >
+              Manage tags
+            </button>
+          )}
+          {selectedTag && (
+            <button
+              type="button"
+              onClick={() => onSelectTag(null)}
+              disabled={disabled}
+              className="text-[11px] text-[#9CA3AF] hover:text-[#ECECEC] transition-colors focus:outline-none"
+            >
+              Clear tag
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Selected Tag Active Indicator */}
+      {selectedTag && !allTags.includes(selectedTag) && (
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border ${selectedClasses}`}
+          >
+            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>{selectedTag}</span>
+            <button
+              type="button"
+              onClick={() => onSelectTag(null)}
+              className="ml-1 hover:opacity-75 focus:outline-none"
+              aria-label="Remove tag"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        </div>
+      )}
+
+      {/* Tag Chips List */}
+      <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+        {allTags.map((tag) => {
+          const isSelected = selectedTag === tag;
+          return (
+            <button
+              key={tag}
+              type="button"
+              disabled={disabled}
+              onClick={() => onSelectTag(isSelected ? null : tag)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg border transition-all active:scale-95 ${
+                isSelected
+                  ? selectedClasses
+                  : 'bg-[#1A1A1A] hover:bg-[#333333] text-[#A3A3A3] hover:text-[#ECECEC] border-[#2E2E2E]'
+              }`}
+            >
+              {isSelected && <Check className="w-3 h-3 stroke-[2.5]" />}
+              <span>{tag}</span>
+            </button>
+          );
+        })}
+
+        {allTags.length === 0 && !isAddingNew && (
+          <span className="text-xs text-[#9CA3AF] self-center mr-1 italic">
+            No tags yet.
+          </span>
+        )}
+
+        {/* Add New Tag Trigger */}
+        {!isAddingNew ? (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => setIsAddingNew(true)}
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg bg-[#2A2A2A] hover:bg-[#383838] text-zinc-300 border border-dashed border-[#444444] transition-colors active:scale-95"
+          >
+            <Plus className="w-3 h-3" />
+            <span>New Tag</span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-1">
+            <input
+              type="text"
+              placeholder="Tag name..."
+              maxLength={40}
+              value={newTagInput}
+              onChange={(e) => setNewTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddNewTag(e);
+                } else if (e.key === 'Escape') {
+                  setIsAddingNew(false);
+                  setNewTagInput('');
+                }
+              }}
+              className="px-2 py-0.5 rounded-lg bg-[#141414] border border-zinc-600 text-xs text-[#ECECEC] placeholder:text-[#666666] focus:outline-none focus:ring-1 focus:ring-white/40 w-28"
+            />
+            <button
+              type="button"
+              onClick={handleAddNewTag}
+              className="p-1 rounded-md bg-white text-[#171717] hover:bg-zinc-200 text-xs font-semibold"
+              title="Add tag"
+            >
+              <Check className="w-3 h-3" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddingNew(false);
+                setNewTagInput('');
+              }}
+              className="p-1 rounded-md text-[#9CA3AF] hover:text-[#ECECEC]"
+              title="Cancel"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
