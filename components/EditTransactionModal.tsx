@@ -67,7 +67,7 @@ export function EditTransactionModal({
       setError(null);
       await onConfirm(transaction.id, {
         amount: parsed.amount,
-        note: noteInput.trim() || undefined,
+        note: noteInput.trim(),
         tag: selectedTag || null,
         type,
       });
