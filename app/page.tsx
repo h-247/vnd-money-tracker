@@ -294,11 +294,6 @@ export default function Home() {
 
       if (selectedShare) {
         setActiveSharedAccount(selectedShare);
-        if (requestedShareId) {
-          const url = new URL(window.location.href);
-          url.searchParams.delete('shareId');
-          window.history.replaceState({}, '', url);
-        }
       }
       setInitialLoadComplete(true);
     };
