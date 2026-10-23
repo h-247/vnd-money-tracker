@@ -59,7 +59,7 @@ export function ShareMoneyModal({
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [busyShareId, setBusyShareId] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -97,11 +97,13 @@ export function ShareMoneyModal({
     }
   };
 
-  const copyLink = async () => {
+  const copyInviteLink = async (shareId: string) => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/`);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      const inviteUrl = new URL('/', window.location.origin);
+      inviteUrl.searchParams.set('shareId', shareId);
+      await navigator.clipboard.writeText(inviteUrl.toString());
+      setCopiedShareId(shareId);
+      window.setTimeout(() => setCopiedShareId(null), 1800);
     } catch {
       setError(
         'Could not copy the link. Copy the address from your browser instead.',
@@ -192,8 +194,8 @@ export function ShareMoneyModal({
               </button>
             </div>
             <p className="text-xs leading-5 text-[#929292]">
-              After inviting them, send them the app link. They can only view
-              your balance and transaction history; you can revoke access here.
+              After inviting them, copy their invitation link below. They must
+              sign in to ChatGPT with the invited email.
             </p>
           </form>
 
@@ -216,18 +218,6 @@ export function ShareMoneyModal({
                   Revoke access at any time.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => void copyLink()}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#444444] px-3 py-2 text-xs font-semibold text-[#ECECEC] hover:bg-[#333333]"
-              >
-                {copied ? (
-                  <Check className="h-3.5 w-3.5 text-emerald-400" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-                {copied ? 'Copied' : 'Copy app link'}
-              </button>
             </div>
             {isLoading ? (
               <div className="flex items-center gap-2 py-3 text-xs text-[#929292]">
@@ -253,6 +243,19 @@ export function ShareMoneyModal({
                         Invited {formatDate(share.createdAt)}
                       </p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => void copyInviteLink(share.id)}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#444444] px-3 py-2 text-xs font-semibold text-[#ECECEC] hover:bg-[#333333]"
+                      aria-label={`Copy invitation link for ${share.viewerEmail}`}
+                    >
+                      {copiedShareId === share.id ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                      {copiedShareId === share.id ? 'Copied' : 'Invite link'}
+                    </button>
                     <button
                       type="button"
                       onClick={() => void handleRevoke(share.id)}

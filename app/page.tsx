@@ -79,6 +79,7 @@ export default function Home() {
   const [isLoadingSummary, setIsLoadingSummary] = useState(true);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -173,8 +174,10 @@ export default function Home() {
       }
       setOutgoingShares(payload.data.outgoing);
       setIncomingShares(payload.data.incoming);
+      return payload.data.incoming;
     } catch (error) {
       console.error('fetchShares error:', error);
+      return [];
     } finally {
       setIsLoadingShares(false);
     }
@@ -249,17 +252,61 @@ export default function Home() {
     ],
   );
 
-  // Initial Load
+  // Load account shares before requesting financial data so invite links open
+  // directly into the correct read-only ledger.
   useEffect(() => {
-    void fetchSummary();
+    let isCurrent = true;
+    const initializeShares = async () => {
+      const incoming = await fetchShares();
+      if (!isCurrent) return;
+
+      const requestedShareId = new URLSearchParams(window.location.search).get(
+        'shareId',
+      );
+      const selectedShare = requestedShareId
+        ? (incoming.find((share) => share.id === requestedShareId) ?? null)
+        : incoming.length === 1
+          ? incoming[0]
+          : null;
+
+      if (selectedShare) {
+        setActiveSharedAccount(selectedShare);
+        if (requestedShareId === selectedShare.id) {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('shareId');
+          window.history.replaceState({}, '', url);
+        }
+      }
+      setInitialLoadComplete(true);
+    };
+
+    void initializeShares();
+    return () => {
+      isCurrent = false;
+    };
+  }, [fetchShares]);
+
+  useEffect(() => {
     void fetchTags();
-    void fetchShares();
-  }, [fetchSummary, fetchTags, fetchShares]);
+  }, [fetchTags]);
+
+  useEffect(() => {
+    if (initialLoadComplete) void fetchSummary();
+  }, [fetchSummary, initialLoadComplete]);
 
   // Load transactions when filters change
   useEffect(() => {
+    if (!initialLoadComplete) return;
     void fetchTransactions(1);
-  }, [search, typeFilter, tagFilter, startDate, endDate, fetchTransactions]);
+  }, [
+    search,
+    typeFilter,
+    tagFilter,
+    startDate,
+    endDate,
+    fetchTransactions,
+    initialLoadComplete,
+  ]);
 
   // Sync / Manual Refresh
   const handleRefresh = async () => {
@@ -291,7 +338,7 @@ export default function Home() {
     addToast(
       'success',
       'Invitation ready',
-      'Copy the app link and send it to the invited person.',
+      'Copy the invitation link next to their email and send it to them.',
     );
   };
 
