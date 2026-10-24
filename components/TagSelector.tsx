@@ -45,19 +45,27 @@ export function TagSelector({
   };
 
   const selectedClasses =
-    accentColor === 'emerald'
-      ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500 shadow-sm'
-      : accentColor === 'red'
-        ? 'bg-red-950/80 text-red-300 border-red-500 shadow-sm'
-        : 'bg-blue-950/80 text-blue-300 border-blue-500 shadow-sm';
+    variant === 'cards'
+      ? accentColor === 'blue'
+        ? 'bg-[#E9ECFF] text-[#4854C7] border-[#5965D8] shadow-sm'
+        : 'bg-[#FDE7F2] text-[#D8127D] border-[#EB168B] shadow-sm'
+      : accentColor === 'emerald'
+        ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500 shadow-sm'
+        : accentColor === 'red'
+          ? 'bg-red-950/80 text-red-300 border-red-500 shadow-sm'
+          : 'bg-blue-950/80 text-blue-300 border-blue-500 shadow-sm';
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">
+        <span
+          className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${variant === 'cards' ? 'text-[#77717A]' : 'text-[#9CA3AF]'}`}
+        >
           <TagIcon className="w-3.5 h-3.5" />
           <span>Category Tag</span>
-          <span className="text-[11px] font-normal text-[#666666] lowercase">
+          <span
+            className={`text-[11px] font-normal lowercase ${variant === 'cards' ? 'text-[#999199]' : 'text-[#666666]'}`}
+          >
             (optional)
           </span>
         </span>
@@ -67,7 +75,7 @@ export function TagSelector({
               type="button"
               onClick={onManageTags}
               disabled={disabled}
-              className="text-[11px] text-[#9CA3AF] hover:text-[#ECECEC] transition-colors underline focus:outline-none"
+              className={`text-[11px] transition-colors underline focus:outline-none ${variant === 'cards' ? 'text-[#77717A] hover:text-[#242126]' : 'text-[#9CA3AF] hover:text-[#ECECEC]'}`}
             >
               Manage tags
             </button>
@@ -77,7 +85,7 @@ export function TagSelector({
               type="button"
               onClick={() => onSelectTag(null)}
               disabled={disabled}
-              className="text-[11px] text-[#9CA3AF] hover:text-[#ECECEC] transition-colors focus:outline-none"
+              className={`text-[11px] transition-colors focus:outline-none ${variant === 'cards' ? 'text-[#77717A] hover:text-[#242126]' : 'text-[#9CA3AF] hover:text-[#ECECEC]'}`}
             >
               Clear tag
             </button>
@@ -128,7 +136,9 @@ export function TagSelector({
               } ${
                 isSelected
                   ? selectedClasses
-                  : 'border-[#383838] bg-[#292929] text-[#BDBDBD] hover:bg-[#333333] hover:text-[#ECECEC]'
+                  : variant === 'cards'
+                    ? 'border-[#E8E1E5] bg-white text-[#514C52] hover:border-[#D6CCD2] hover:bg-[#FFFAFC]'
+                    : 'border-[#383838] bg-[#292929] text-[#BDBDBD] hover:bg-[#333333] hover:text-[#ECECEC]'
               }`}
             >
               {isSelected && <Check className="w-3 h-3 stroke-[2.5]" />}
@@ -151,7 +161,7 @@ export function TagSelector({
             onClick={() => setIsAddingNew(true)}
             className={`inline-flex items-center gap-1 text-xs font-medium text-zinc-300 transition-colors active:scale-[0.98] ${
               variant === 'cards'
-                ? 'min-h-14 w-full justify-start rounded-xl border border-dashed border-[#444444] bg-[#252525] px-3 py-3 hover:bg-[#303030]'
+                ? 'min-h-14 w-full justify-start rounded-xl border border-dashed border-[#D9CFD5] bg-[#FFFAFC] px-3 py-3 text-[#6F6B70] hover:bg-[#FFF3F8]'
                 : 'rounded-lg border border-dashed border-[#444444] bg-[#2A2A2A] px-2.5 py-1 hover:bg-[#383838]'
             }`}
           >
@@ -175,7 +185,7 @@ export function TagSelector({
                   setNewTagInput('');
                 }
               }}
-              className="px-2 py-0.5 rounded-lg bg-[#141414] border border-zinc-600 text-xs text-[#ECECEC] placeholder:text-[#666666] focus:outline-none focus:ring-1 focus:ring-white/40 w-28"
+              className={`w-28 rounded-lg border px-2 py-0.5 text-xs focus:outline-none focus:ring-1 ${variant === 'cards' ? 'border-[#E2D9DE] bg-white text-[#242126] placeholder:text-[#AAA4AA] focus:ring-[#EB168B]/30' : 'border-zinc-600 bg-[#141414] text-[#ECECEC] placeholder:text-[#666666] focus:ring-white/40'}`}
             />
             <button
               type="button"
@@ -191,7 +201,7 @@ export function TagSelector({
                 setIsAddingNew(false);
                 setNewTagInput('');
               }}
-              className="p-1 rounded-md text-[#9CA3AF] hover:text-[#ECECEC]"
+              className={`rounded-md p-1 ${variant === 'cards' ? 'text-[#77717A] hover:text-[#242126]' : 'text-[#9CA3AF] hover:text-[#ECECEC]'}`}
               title="Cancel"
             >
               <X className="w-3 h-3" />
