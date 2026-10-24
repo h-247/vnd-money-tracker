@@ -9,7 +9,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
-import { formatVND, parseVNDInput } from '@/lib/financial';
+import { formatVND, MAX_SAFE_VND, parseVNDInput } from '@/lib/financial';
 import { TagSelector } from '@/components/TagSelector';
 
 export type MoneyEntryType = 'ADD' | 'SUBTRACT';
@@ -92,6 +92,14 @@ export function MoneyEntryModal({
   if (!isOpen) return null;
 
   const parsed = parseVNDInput(amountInput);
+  const suggestedAmounts =
+    parsed.success && parsed.amount
+      ? [10, 100, 1_000]
+          .map((multiplier) => parsed.amount! * multiplier)
+          .filter(
+            (amount) => Number.isSafeInteger(amount) && amount <= MAX_SAFE_VND,
+          )
+      : QUICK_AMOUNTS;
   const isAdd = type === 'ADD';
   const isInsufficientFunds =
     !isAdd &&
@@ -423,19 +431,19 @@ export function MoneyEntryModal({
               )}
             </button>
             <div className="grid grid-cols-3 gap-2">
-              {QUICK_AMOUNTS.filter(
-                (amount) => isAdd || amount <= currentBalance,
-              ).map((amount) => (
-                <button
-                  key={amount}
-                  type="button"
-                  onClick={() => handleQuickAmount(amount)}
-                  disabled={isSubmitting}
-                  className="rounded-lg bg-[#303030] px-2 py-1.5 text-xs font-semibold text-[#E5E5E5] transition hover:bg-[#3B3B3B] active:scale-[0.98] disabled:opacity-50"
-                >
-                  {formatVND(amount)}
-                </button>
-              ))}
+              {suggestedAmounts
+                .filter((amount) => isAdd || amount <= currentBalance)
+                .map((amount) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => handleQuickAmount(amount)}
+                    disabled={isSubmitting}
+                    className="rounded-lg bg-[#303030] px-2 py-1.5 text-xs font-semibold text-[#E5E5E5] transition hover:bg-[#3B3B3B] active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {formatVND(amount)}
+                  </button>
+                ))}
             </div>
             {!isAdd && currentBalance > 0 && (
               <button
