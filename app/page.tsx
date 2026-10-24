@@ -5,8 +5,10 @@ import { Header } from '@/components/Header';
 import { BalanceCard } from '@/components/BalanceCard';
 import { SummaryCards } from '@/components/SummaryCards';
 import { TransactionHistory } from '@/components/TransactionHistory';
-import { AddMoneyModal } from '@/components/AddMoneyModal';
-import { SubtractMoneyModal } from '@/components/SubtractMoneyModal';
+import {
+  MoneyEntryModal,
+  type MoneyEntryType,
+} from '@/components/MoneyEntryModal';
 import { EditTransactionModal } from '@/components/EditTransactionModal';
 import { DeleteTransactionModal } from '@/components/DeleteTransactionModal';
 import { ManageTagsModal } from '@/components/ManageTagsModal';
@@ -777,20 +779,22 @@ export default function Home() {
       </main>
 
       {/* Modals & Dialogs */}
-      <AddMoneyModal
-        isOpen={isAddModalOpen}
-        availableTags={incomeTagNames}
-        onClose={() => setIsAddModalOpen(false)}
-        onConfirm={handleConfirmAdd}
-        onManageTags={() => setIsManageTagsOpen(true)}
-      />
-
-      <SubtractMoneyModal
-        isOpen={isSubtractModalOpen}
+      <MoneyEntryModal
+        isOpen={isAddModalOpen || isSubtractModalOpen}
+        initialType={isAddModalOpen ? 'ADD' : 'SUBTRACT'}
         currentBalance={summary.currentBalance}
-        availableTags={expenseTagNames}
-        onClose={() => setIsSubtractModalOpen(false)}
-        onConfirm={handleConfirmSubtract}
+        availableTags={isAddModalOpen ? incomeTagNames : expenseTagNames}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setIsSubtractModalOpen(false);
+        }}
+        onTypeChange={(type: MoneyEntryType) => {
+          setIsAddModalOpen(type === 'ADD');
+          setIsSubtractModalOpen(type === 'SUBTRACT');
+        }}
+        onConfirm={(type, data) =>
+          type === 'ADD' ? handleConfirmAdd(data) : handleConfirmSubtract(data)
+        }
         onManageTags={() => setIsManageTagsOpen(true)}
       />
 

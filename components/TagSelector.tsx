@@ -10,6 +10,7 @@ interface TagSelectorProps {
   defaultTags?: string[];
   customTags?: string[];
   accentColor?: 'emerald' | 'red' | 'blue';
+  variant?: 'chips' | 'cards';
   disabled?: boolean;
   onManageTags?: () => void;
 }
@@ -21,6 +22,7 @@ export function TagSelector({
   defaultTags = [],
   customTags = [],
   accentColor = 'emerald',
+  variant = 'chips',
   disabled = false,
   onManageTags,
 }: TagSelectorProps) {
@@ -104,7 +106,13 @@ export function TagSelector({
       )}
 
       {/* Tag Chips List */}
-      <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+      <div
+        className={
+          variant === 'cards'
+            ? 'grid max-h-52 grid-cols-2 gap-2 overflow-y-auto pr-1'
+            : 'flex max-h-36 flex-wrap gap-1.5 overflow-y-auto pr-1'
+        }
+      >
         {allTags.map((tag) => {
           const isSelected = selectedTag === tag;
           return (
@@ -113,10 +121,14 @@ export function TagSelector({
               type="button"
               disabled={disabled}
               onClick={() => onSelectTag(isSelected ? null : tag)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg border transition-all active:scale-95 ${
+              className={`inline-flex items-center gap-1.5 rounded-xl border text-xs font-medium transition-all active:scale-[0.98] ${
+                variant === 'cards'
+                  ? 'min-h-14 w-full justify-start px-3 py-3 text-left'
+                  : 'px-2.5 py-1'
+              } ${
                 isSelected
                   ? selectedClasses
-                  : 'bg-[#1A1A1A] hover:bg-[#333333] text-[#A3A3A3] hover:text-[#ECECEC] border-[#2E2E2E]'
+                  : 'border-[#383838] bg-[#292929] text-[#BDBDBD] hover:bg-[#333333] hover:text-[#ECECEC]'
               }`}
             >
               {isSelected && <Check className="w-3 h-3 stroke-[2.5]" />}
@@ -137,7 +149,11 @@ export function TagSelector({
             type="button"
             disabled={disabled}
             onClick={() => setIsAddingNew(true)}
-            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg bg-[#2A2A2A] hover:bg-[#383838] text-zinc-300 border border-dashed border-[#444444] transition-colors active:scale-95"
+            className={`inline-flex items-center gap-1 text-xs font-medium text-zinc-300 transition-colors active:scale-[0.98] ${
+              variant === 'cards'
+                ? 'min-h-14 w-full justify-start rounded-xl border border-dashed border-[#444444] bg-[#252525] px-3 py-3 hover:bg-[#303030]'
+                : 'rounded-lg border border-dashed border-[#444444] bg-[#2A2A2A] px-2.5 py-1 hover:bg-[#383838]'
+            }`}
           >
             <Plus className="w-3 h-3" />
             <span>New Tag</span>
